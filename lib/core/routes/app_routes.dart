@@ -5,7 +5,6 @@ class AppRoutes {
 
   static const String dashboard = '/dashboard';
 
-  static const String myTrips = '/my-trips';
   static const String createTrip = '/create-trip';
   static const String tripDashboard = '/trip-dashboard';
   static const String tripSettings = '/trip-settings';
