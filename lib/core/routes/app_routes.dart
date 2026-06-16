@@ -12,6 +12,7 @@ class AppRoutes {
   static const String joinRequests = '/join-requests';
 
   static const String itinerary = '/itinerary';
+  static const String tasks = '/tasks';
   static const String budgetExpenses = '/budget-expenses';
   static const String contributionSettlement = '/contribution-settlement';
   static const String personalDebt = '/personal-debt';

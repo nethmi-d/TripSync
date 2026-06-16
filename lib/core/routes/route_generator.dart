@@ -8,6 +8,11 @@ import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/trips/screens/create_trip.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../../features/trips/screens/trip_dashboard_screen.dart';
+import '../../features/trips/screens/trip_settings.dart';
+import '../../features/members/screens/invite_members.dart';
+import '../../features/itinerary/screens/itinerary_screen.dart';
+import '../../features/tasks/screens/tasks_screen.dart';
+
 import 'app_routes.dart';
 
 class RouteGenerator {
@@ -38,6 +43,18 @@ class RouteGenerator {
         return _buildRoute(
           TripDashboardScreen(tripId: settings.arguments as String?),
         );
+
+      case AppRoutes.tripSettings:
+        return _buildRoute(const TripSettingsScreen());
+
+      case AppRoutes.inviteMembers:
+        return _buildRoute(const InviteMembersScreen());
+
+      case AppRoutes.itinerary:
+        return _buildRoute(const ItineraryScreen());
+
+      case AppRoutes.tasks:
+        return _buildRoute(const TasksScreen());
 
       default:
         return _buildRoute(

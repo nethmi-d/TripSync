@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+
+import '../../../core/routes/app_routes.dart';
+
 import '../models/trip_model.dart';
 import '../services/trip_service.dart';
 
@@ -87,35 +90,50 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ActionCard(
-                    icon: Icons.calendar_today_outlined,
-                    title: "Itinerary",
-                    iconColor: Color(0xFF2563EB),
-                    backgroundColor: Color(0xFFDBEAFE),
-                  ),
-                  ActionCard(
-                    icon: Icons.attach_money,
-                    title: "Budget",
-                    iconColor: Color(0xFF16A34A),
-                    backgroundColor: Color(0xFFDCFCE7),
-                  ),
-                  ActionCard(
-                    icon: Icons.task_alt,
-                    title: "Tasks",
-                    iconColor: Color(0xFFA855F7),
-                    backgroundColor: Color(0xFFF3E8FF),
-                  ),
-                  ActionCard(
-                    icon: Icons.camera_alt,
-                    title: "Photos",
-                    iconColor: Color(0xFFEC4899),
-                    backgroundColor: Color(0xFFFCE7F3),
-                  ),
-                ],
-              ),
+              Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    ActionCard(
+      icon: Icons.calendar_today_outlined,
+      title: "Itinerary",
+      iconColor: const Color(0xFF2563EB),
+      backgroundColor: const Color(0xFFDBEAFE),
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.itinerary,
+        );
+      },
+    ),
+
+    const ActionCard(
+      icon: Icons.attach_money,
+      title: "Budget",
+      iconColor: Color(0xFF16A34A),
+      backgroundColor: Color(0xFFDCFCE7),
+    ),
+
+    ActionCard(
+      icon: Icons.task_alt,
+      title: "Tasks",
+      iconColor: const Color(0xFFA855F7),
+      backgroundColor: const Color(0xFFF3E8FF),
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.tasks,
+        );
+      },
+    ),
+
+    const ActionCard(
+      icon: Icons.camera_alt,
+      title: "Photos",
+      iconColor: Color(0xFFEC4899),
+      backgroundColor: Color(0xFFFCE7F3),
+    ),
+  ],
+),
               const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -292,7 +310,12 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       color: Colors.white,
                       size: 18,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(
+                      context,
+                      AppRoutes.inviteMembers,
+                    );
+                    },
                   ),
                 ),
               ),
@@ -308,7 +331,12 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       color: Colors.white,
                       size: 18,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.tripSettings,
+                      );
+                    },
                   ),
                 ),
               ),
@@ -504,6 +532,7 @@ class ActionCard extends StatelessWidget {
   final String title;
   final Color iconColor;
   final Color backgroundColor;
+  final VoidCallback? onTap;
 
   const ActionCard({
     super.key,
@@ -511,38 +540,55 @@ class ActionCard extends StatelessWidget {
     required this.title,
     required this.iconColor,
     required this.backgroundColor,
+    this.onTap,
   });
+
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 72,
-      height: 84,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 12),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 72,
+        height: 84,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.05),
+              blurRadius: 12,
             ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 22,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
