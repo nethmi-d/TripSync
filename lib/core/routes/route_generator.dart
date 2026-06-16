@@ -35,7 +35,9 @@ class RouteGenerator {
         return _buildRoute(const CreateTripScreen());
 
       case AppRoutes.tripDashboard:
-        return _buildRoute(const TripDashboardScreen());
+        return _buildRoute(
+          TripDashboardScreen(tripId: settings.arguments as String?),
+        );
 
       default:
         return _buildRoute(

@@ -36,6 +36,13 @@ export default {
         return deleteProfilePhoto(env, uid);
       }
 
+      const tripCoverMatch = url.pathname.match(
+        /^\/v1\/trips\/([^/]+)\/cover-photo$/,
+      );
+      if (tripCoverMatch && request.method === "POST") {
+        return uploadTripCoverPhoto(request, env, uid, tripCoverMatch[1]);
+      }
+
       return json({ message: "Not found." }, 404);
     } catch (error) {
       const message =
@@ -146,6 +153,65 @@ async function deleteProfilePhoto(env: Env, uid: string): Promise<Response> {
     );
   }
   return json({ deleted: true });
+}
+
+async function uploadTripCoverPhoto(
+  request: Request,
+  env: Env,
+  uid: string,
+  tripId: string,
+): Promise<Response> {
+  if (!/^[A-Za-z0-9_-]+$/.test(tripId)) {
+    throw new ServiceError(400, "Invalid trip ID.");
+  }
+
+  const form = await request.formData();
+  const entry = form.get("file");
+  if (entry == null || typeof entry === "string") {
+    throw new ServiceError(400, "A trip cover image is required.");
+  }
+  const file = entry as File;
+  if (!file.type.startsWith("image/")) {
+    throw new ServiceError(400, "Only image files are allowed.");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new ServiceError(400, "Choose a cover image smaller than 5 MB.");
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const publicId = `tripsync/trips/${tripId}/cover`;
+  const parameters = {
+    context: `uploaded_by=${uid}`,
+    invalidate: "true",
+    overwrite: "true",
+    public_id: publicId,
+    timestamp,
+  };
+  const signature = await cloudinarySignature(
+    parameters,
+    env.CLOUDINARY_API_SECRET,
+  );
+
+  const upload = new FormData();
+  upload.set("file", file);
+  upload.set("api_key", env.CLOUDINARY_API_KEY);
+  upload.set("signature", signature);
+  Object.entries(parameters).forEach(([key, value]) => upload.set(key, value));
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: upload },
+  );
+  const body = (await response.json()) as CloudinaryResponse;
+
+  if (!response.ok || !body.secure_url || !body.public_id) {
+    throw new ServiceError(
+      502,
+      body.error?.message ?? "Cloudinary could not upload the trip cover image.",
+    );
+  }
+
+  return json({ secure_url: body.secure_url, public_id: body.public_id });
 }
 
 async function cloudinarySignature(
