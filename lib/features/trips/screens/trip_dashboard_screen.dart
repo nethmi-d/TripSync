@@ -1,66 +1,83 @@
 import 'package:flutter/material.dart';
 
-class TripDashboardScreen extends StatelessWidget {
-  const TripDashboardScreen({super.key});
+import '../models/trip_model.dart';
+import '../services/trip_service.dart';
+
+class TripDashboardScreen extends StatefulWidget {
+  final String? tripId;
+
+  const TripDashboardScreen({super.key, this.tripId});
+
+  @override
+  State<TripDashboardScreen> createState() => _TripDashboardScreenState();
+}
+
+class _TripDashboardScreenState extends State<TripDashboardScreen> {
+  final TripService _tripService = TripService();
+  late final Future<TripModel?> _tripFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final tripId = widget.tripId;
+    _tripFuture = tripId == null
+        ? Future.value(null)
+        : _tripService.getTrip(tripId);
+  }
 
   @override
   Widget build(BuildContext context) {
     final expenses = [
       {
         "title": "Flight Tickets",
-        "subtitle": "Paid by Sarah • May 5",
+        "subtitle": "Paid by Sarah - May 5",
         "amount": "\$1200",
       },
       {
         "title": "Hotel Deposit",
-        "subtitle": "Paid by Mike • May 3",
+        "subtitle": "Paid by Mike - May 3",
         "amount": "\$800",
       },
       {
         "title": "Car Rental",
-        "subtitle": "Paid by You • May 1",
+        "subtitle": "Paid by You - May 1",
         "amount": "\$340",
       },
     ];
 
     final tasks = [
-      {
-        "title": "Book scuba diving tour",
-        "subtitle": "Sarah • Due May 10",
-      },
-      {
-        "title": "Get travel insurance",
-        "subtitle": "You • Due May 12",
-      },
-      {
-        "title": "Confirm hotel check-in",
-        "subtitle": "Mike • Due May 15",
-      },
+      {"title": "Book scuba diving tour", "subtitle": "Sarah - Due May 10"},
+      {"title": "Get travel insurance", "subtitle": "You - Due May 12"},
+      {"title": "Confirm hotel check-in", "subtitle": "Mike - Due May 15"},
     ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FC),
-
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(18),
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 "Manage your adventures",
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
+                style: TextStyle(color: Colors.grey),
               ),
-
               const SizedBox(height: 14),
+              FutureBuilder<TripModel?>(
+                future: _tripFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(
+                      height: 320,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
 
-              _tripCard(context),
-
+                  return _tripCard(context, snapshot.data);
+                },
+              ),
               const SizedBox(height: 24),
-
               const Text(
                 "Quick Actions",
                 style: TextStyle(
@@ -69,33 +86,28 @@ class TripDashboardScreen extends StatelessWidget {
                   color: Color(0xFF111827),
                 ),
               ),
-
               const SizedBox(height: 14),
-
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   ActionCard(
                     icon: Icons.calendar_today_outlined,
                     title: "Itinerary",
                     iconColor: Color(0xFF2563EB),
                     backgroundColor: Color(0xFFDBEAFE),
                   ),
-
                   ActionCard(
                     icon: Icons.attach_money,
                     title: "Budget",
                     iconColor: Color(0xFF16A34A),
                     backgroundColor: Color(0xFFDCFCE7),
                   ),
-
                   ActionCard(
                     icon: Icons.task_alt,
                     title: "Tasks",
                     iconColor: Color(0xFFA855F7),
                     backgroundColor: Color(0xFFF3E8FF),
                   ),
-
                   ActionCard(
                     icon: Icons.camera_alt,
                     title: "Photos",
@@ -104,19 +116,13 @@ class TripDashboardScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 28),
-
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     "Recent Expenses",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
                   ),
                   TextButton(
                     onPressed: () {},
@@ -130,52 +136,35 @@ class TripDashboardScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
               Card(
                 child: Column(
                   children: expenses
                       .map(
-                        (e) => ListTile(
-                          title: Text(e["title"]!),
-                          subtitle: Text(e["subtitle"]!),
+                        (expense) => ListTile(
+                          title: Text(expense["title"]!),
+                          subtitle: Text(expense["subtitle"]!),
                           trailing: Text(
-                            e["amount"]!,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            expense["amount"]!,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       )
                       .toList(),
                 ),
               ),
-
               const SizedBox(height: 24),
-
               const Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     "Pending Tasks",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
                   ),
-                  Text(
-                    "3 tasks",
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
+                  Text("3 tasks", style: TextStyle(color: Color(0xFF6B7280))),
                 ],
               ),
-
               const SizedBox(height: 12),
-
               Card(
                 child: Column(
                   children: tasks
@@ -194,38 +183,35 @@ class TripDashboardScreen extends StatelessWidget {
           ),
         ),
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: "Alerts",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
     );
   }
 
-  Widget sectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 18,
-      ),
-    );
-  }
+  Widget _tripCard(BuildContext context, TripModel? trip) {
+    final title = trip?.name ?? "Bali Adventure";
+    final subtitle = trip?.description?.isNotEmpty == true
+        ? trip!.description!
+        : "Plan, budget, and share memories together";
+    final dateRange = trip == null
+        ? "June 15 - June 25, 2026"
+        : "${_formatDate(trip.startDate)} - ${_formatDate(trip.endDate)}";
+    final daysLeft = trip == null
+        ? "38 days left"
+        : _daysLeftLabel(trip.startDate);
+    final coverImageUrl =
+        trip?.coverImageUrl ??
+        "https://images.unsplash.com/photo-1537996194471-e657df975ab4";
 
-  Widget _tripCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -247,13 +233,24 @@ class TripDashboardScreen extends StatelessWidget {
                   top: Radius.circular(24),
                 ),
                 child: Image.network(
-                  "https://images.unsplash.com/photo-1537996194471-e657df975ab4",
+                  coverImageUrl,
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: const Color(0xFF1D4ED8),
+                      child: const Icon(
+                        Icons.travel_explore,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                    );
+                  },
                 ),
               ),
-
               Container(
                 height: 180,
                 decoration: BoxDecoration(
@@ -263,14 +260,10 @@ class TripDashboardScreen extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(.65),
-                    ],
+                    colors: [Colors.transparent, Colors.black.withOpacity(.65)],
                   ),
                 ),
               ),
-
               Positioned(
                 top: 12,
                 left: 12,
@@ -283,13 +276,10 @@ class TripDashboardScreen extends StatelessWidget {
                       color: Colors.white,
                       size: 18,
                     ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
               ),
-
               Positioned(
                 top: 12,
                 right: 60,
@@ -302,13 +292,10 @@ class TripDashboardScreen extends StatelessWidget {
                       color: Colors.white,
                       size: 18,
                     ),
-                    onPressed: () {
-                      // invite members
-                    },
+                    onPressed: () {},
                   ),
                 ),
               ),
-
               Positioned(
                 top: 12,
                 right: 12,
@@ -321,61 +308,53 @@ class TripDashboardScreen extends StatelessWidget {
                       color: Colors.white,
                       size: 18,
                     ),
-                    onPressed: () {
-                      // trip settings
-                    },
+                    onPressed: () {},
                   ),
                 ),
               ),
-
-              const Positioned(
+              Positioned(
                 left: 18,
+                right: 18,
                 bottom: 40,
                 child: Text(
-                  "Bali Adventure",
-                  style: TextStyle(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-
-              const Positioned(
+              Positioned(
                 left: 18,
+                right: 18,
                 bottom: 16,
                 child: Text(
-                  "Bali, Indonesia",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ),
             ],
           ),
-
           Padding(
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.calendar_month,
-                      color: Color(0xFF2563EB),
-                    ),
+                    const Icon(Icons.calendar_month, color: Color(0xFF2563EB)),
                     const SizedBox(width: 8),
-
-                    const Text(
-                      "June 15 - June 25, 2026",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        dateRange,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ),
-
-                    const Spacer(),
-
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -385,9 +364,9 @@ class TripDashboardScreen extends StatelessWidget {
                         color: const Color(0xFF0EA5E9),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        "38 days left",
-                        style: TextStyle(
+                      child: Text(
+                        daysLeft,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
@@ -395,98 +374,31 @@ class TripDashboardScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 18),
-
                 Row(
                   children: [
                     Expanded(
-                      child: SizedBox(
-                        height: 135,
-                        child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Budget Used",
-                              style: TextStyle(
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            const Text(
-                              "\$2340",
-                              style: TextStyle(
-                                fontSize: 34,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(20),
-                              child:
-                                  const LinearProgressIndicator(
-                                value: 0.53,
-                                minHeight: 6,
-                              ),
-                            ),
-                          ],
+                      child: _SummaryTile(
+                        title: "Budget Used",
+                        value: "\$0",
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: const LinearProgressIndicator(
+                            value: 0,
+                            minHeight: 6,
+                          ),
                         ),
                       ),
                     ),
-                    ),
-
                     const SizedBox(width: 12),
-
-                    Expanded(
-                      child: SizedBox(
-                        height: 135,
-                        child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF7F7),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        child: const Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Pending Tasks",
-                              style: TextStyle(
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "3",
-                              style: TextStyle(
-                                fontSize: 34,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "tasks to complete",
-                              style: TextStyle(
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-                          ],
-                        ),
+                    const Expanded(
+                      child: _SummaryTile(
+                        title: "Pending Tasks",
+                        value: "0",
+                        subtitle: "tasks to complete",
+                        backgroundColor: Color(0xFFEAF7F7),
                       ),
-                    ),
                     ),
                   ],
                 ),
@@ -494,6 +406,94 @@ class TripDashboardScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return "${_monthName(date.month)} ${date.day}, ${date.year}";
+  }
+
+  String _daysLeftLabel(DateTime startDate) {
+    final today = DateTime.now();
+    final currentDate = DateTime(today.year, today.month, today.day);
+    final tripDate = DateTime(startDate.year, startDate.month, startDate.day);
+    final difference = tripDate.difference(currentDate).inDays;
+
+    if (difference > 1) {
+      return "$difference days left";
+    }
+    if (difference == 1) {
+      return "1 day left";
+    }
+    if (difference == 0) {
+      return "Starts today";
+    }
+    return "In progress";
+  }
+
+  String _monthName(int month) {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    return months[month - 1];
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  final String title;
+  final String value;
+  final String? subtitle;
+  final Color backgroundColor;
+  final Widget? child;
+
+  const _SummaryTile({
+    required this.title,
+    required this.value,
+    this.subtitle,
+    required this.backgroundColor,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 135,
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(color: Color(0xFF6B7280))),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            child ??
+                Text(
+                  subtitle ?? "",
+                  style: const TextStyle(color: Color(0xFF6B7280)),
+                ),
+          ],
+        ),
       ),
     );
   }
@@ -522,10 +522,7 @@ class ActionCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.05),
-            blurRadius: 12,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 12),
         ],
       ),
       child: Column(
@@ -538,21 +535,12 @@ class ActionCard extends StatelessWidget {
               color: backgroundColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 22,
-            ),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
-
           const SizedBox(height: 10),
-
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
           ),
         ],
       ),
