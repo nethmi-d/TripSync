@@ -91,49 +91,49 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
               ),
               const SizedBox(height: 14),
               Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    ActionCard(
-      icon: Icons.calendar_today_outlined,
-      title: "Itinerary",
-      iconColor: const Color(0xFF2563EB),
-      backgroundColor: const Color(0xFFDBEAFE),
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.itinerary,
-        );
-      },
-    ),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ActionCard(
+                    icon: Icons.calendar_today_outlined,
+                    title: "Itinerary",
+                    iconColor: const Color(0xFF2563EB),
+                    backgroundColor: const Color(0xFFDBEAFE),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.itinerary,
+                      );
+                    },
+                  ),
 
-    const ActionCard(
-      icon: Icons.attach_money,
-      title: "Budget",
-      iconColor: Color(0xFF16A34A),
-      backgroundColor: Color(0xFFDCFCE7),
-    ),
+                  const ActionCard(
+                    icon: Icons.attach_money,
+                    title: "Budget",
+                    iconColor: Color(0xFF16A34A),
+                    backgroundColor: Color(0xFFDCFCE7),
+                  ),
 
-    ActionCard(
-      icon: Icons.task_alt,
-      title: "Tasks",
-      iconColor: const Color(0xFFA855F7),
-      backgroundColor: const Color(0xFFF3E8FF),
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.tasks,
-        );
-      },
-    ),
+                  ActionCard(
+                    icon: Icons.task_alt,
+                    title: "Tasks",
+                    iconColor: const Color(0xFFA855F7),
+                    backgroundColor: const Color(0xFFF3E8FF),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.tasks,
+                      );
+                    },
+                  ),
 
-    const ActionCard(
-      icon: Icons.camera_alt,
-      title: "Photos",
-      iconColor: Color(0xFFEC4899),
-      backgroundColor: Color(0xFFFCE7F3),
-    ),
-  ],
-),
+                  const ActionCard(
+                    icon: Icons.camera_alt,
+                    title: "Photos",
+                    iconColor: Color(0xFFEC4899),
+                    backgroundColor: Color(0xFFFCE7F3),
+                  ),
+                ],
+              ),
               const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
