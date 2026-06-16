@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -36,10 +37,19 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.forward();
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
-    });
+    _openNextScreen();
+  }
+
+  Future<void> _openNextScreen() async {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) {
+      return;
+    }
+
+    final nextRoute = FirebaseAuth.instance.currentUser == null
+        ? AppRoutes.login
+        : AppRoutes.dashboard;
+    Navigator.pushReplacementNamed(context, nextRoute);
   }
 
   @override

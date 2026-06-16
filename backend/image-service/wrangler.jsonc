@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tripsync-image-service",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-15",
+  "vars": {
+    "FIREBASE_PROJECT_ID": "tripsync-ae73b"
+  }
+}

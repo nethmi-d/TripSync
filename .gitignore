@@ -33,6 +33,14 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local backend secrets
+**/.dev.vars
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules/
+**/.wrangler/
+
 # Symbolication related
 app.*.symbols
 
