@@ -4,7 +4,10 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/notifications/screens/notifications_screen.dart';
+import '../../features/trips/screens/create_trip.dart';
 import '../../features/splash/screens/splash_screen.dart';
+import '../../features/trips/screens/trip_dashboard_screen.dart';
 import 'app_routes.dart';
 
 class RouteGenerator {
@@ -24,6 +27,15 @@ class RouteGenerator {
 
       case AppRoutes.profile:
         return _buildRoute(const ProfileScreen());
+
+      case AppRoutes.notifications:
+        return _buildRoute(NotificationsScreen());
+
+      case AppRoutes.createTrip:
+        return _buildRoute(const CreateTripScreen());
+
+      case AppRoutes.tripDashboard:
+        return _buildRoute(const TripDashboardScreen());
 
       default:
         return _buildRoute(
