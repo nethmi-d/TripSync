@@ -18,6 +18,10 @@ export default {
     try {
       const url = new URL(request.url);
 
+      if (request.method === "OPTIONS") {
+        return cors(new Response(null, { status: 204 }));
+      }
+
       if (request.method === "GET" && url.pathname === "/health") {
         return json({ status: "ok" });
       }
@@ -163,10 +167,22 @@ async function cloudinarySignature(
 }
 
 function json(body: unknown, status = 200): Response {
-  return Response.json(body, {
+  return cors(Response.json(body, {
     status,
     headers: { "Cache-Control": "no-store" },
-  });
+  }));
+}
+
+function cors(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Authorization, Content-Type",
+  );
+  headers.set("Access-Control-Max-Age", "86400");
+  return new Response(response.body, { ...response, headers });
 }
 
 class ServiceError extends Error {
