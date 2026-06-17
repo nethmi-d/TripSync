@@ -7,6 +7,7 @@ class TripModel {
   final DateTime startDate;
   final DateTime endDate;
   final String createdBy;
+  final List<String> adminIds;
   final List<String> memberIds;
   final String? coverImageUrl;
   final String? coverImagePublicId;
@@ -20,6 +21,7 @@ class TripModel {
     required this.startDate,
     required this.endDate,
     required this.createdBy,
+    required this.adminIds,
     required this.memberIds,
     required this.coverImageUrl,
     required this.coverImagePublicId,
@@ -35,6 +37,7 @@ class TripModel {
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'createdBy': createdBy,
+      'adminIds': adminIds,
       'memberIds': memberIds,
       'coverImageUrl': coverImageUrl,
       'coverImagePublicId': coverImagePublicId,
@@ -51,6 +54,9 @@ class TripModel {
       startDate: _dateFrom(map['startDate']),
       endDate: _dateFrom(map['endDate']),
       createdBy: map['createdBy'] as String? ?? '',
+      adminIds: List<String>.from(
+        map['adminIds'] as List? ?? [map['createdBy'] as String? ?? ''],
+      ).where((id) => id.isNotEmpty).toList(),
       memberIds: List<String>.from(map['memberIds'] as List? ?? const []),
       coverImageUrl: map['coverImageUrl'] as String?,
       coverImagePublicId: map['coverImagePublicId'] as String?,

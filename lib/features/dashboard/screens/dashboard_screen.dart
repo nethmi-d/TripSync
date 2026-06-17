@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../auth/models/user_model.dart';
+import '../../auth/services/auth_service.dart';
 import '../../trips/models/trip_model.dart';
 import '../../trips/services/trip_service.dart';
 
@@ -13,6 +15,14 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final TripService _tripService = TripService();
+  final AuthService _authService = AuthService();
+  Future<AppUser?> _profileFuture = Future.value(null);
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _authService.getCurrentUserProfile();
+  }
 
   void _openTripDashboard(BuildContext context, String tripId) {
     Navigator.pushNamed(context, AppRoutes.tripDashboard, arguments: tripId);
@@ -27,7 +37,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _openProfile(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.profile);
+    Navigator.pushNamed(context, AppRoutes.profile).then((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _profileFuture = _authService.getCurrentUserProfile();
+      });
+    });
   }
 
   @override
@@ -53,6 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 _DashboardHeader(
                   tripCount: trips.length,
+                  profileFuture: _profileFuture,
                   onNotificationsTap: () => _openNotifications(context),
                   onProfileTap: () => _openProfile(context),
                 ),
@@ -136,11 +154,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 class _DashboardHeader extends StatelessWidget {
   final int tripCount;
+  final Future<AppUser?> profileFuture;
   final VoidCallback onNotificationsTap;
   final VoidCallback onProfileTap;
 
   const _DashboardHeader({
     required this.tripCount,
+    required this.profileFuture,
     required this.onNotificationsTap,
     required this.onProfileTap,
   });
@@ -211,12 +231,56 @@ class _DashboardHeader extends StatelessWidget {
           ),
           IconButton(
             onPressed: onProfileTap,
-            icon: const Icon(Icons.person_outline_rounded),
+            icon: FutureBuilder<AppUser?>(
+              future: profileFuture,
+              builder: (context, snapshot) {
+                final user = snapshot.data;
+                final photoUrl = user?.photoUrl;
+                final displayName = user?.displayName ?? user?.fullName ?? '';
+
+                return CircleAvatar(
+                  radius: 14,
+                  backgroundColor: const Color(0xFFE5E7EB),
+                  backgroundImage: photoUrl == null || photoUrl.isEmpty
+                      ? null
+                      : NetworkImage(photoUrl),
+                  child: photoUrl == null || photoUrl.isEmpty
+                      ? Text(
+                          _profileInitials(displayName),
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      : null,
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+String _profileInitials(String name) {
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
+
+  if (parts.isEmpty) {
+    return '?';
+  }
+
+  if (parts.length == 1) {
+    return parts.first.substring(0, 1).toUpperCase();
+  }
+
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
 }
 
 class _RecentTripCard extends StatelessWidget {

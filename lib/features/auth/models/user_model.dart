@@ -5,6 +5,7 @@ class AppUser {
   final String fullName;
   final String displayName;
   final String email;
+  final String emailLowercase;
   final String? phoneNumber;
   final String? photoUrl;
   final String? photoPublicId;
@@ -16,6 +17,7 @@ class AppUser {
     required this.fullName,
     required this.displayName,
     required this.email,
+    required this.emailLowercase,
     required this.phoneNumber,
     required this.photoUrl,
     required this.photoPublicId,
@@ -29,6 +31,7 @@ class AppUser {
       'fullName': fullName,
       'displayName': displayName,
       'email': email,
+      'emailLowercase': emailLowercase,
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
       'photoPublicId': photoPublicId,
@@ -43,6 +46,9 @@ class AppUser {
       fullName: map['fullName'] as String? ?? '',
       displayName: map['displayName'] as String? ?? '',
       email: map['email'] as String? ?? '',
+      emailLowercase:
+          map['emailLowercase'] as String? ??
+          (map['email'] as String? ?? '').trim().toLowerCase(),
       phoneNumber: map['phoneNumber'] as String?,
       photoUrl: map['photoUrl'] as String?,
       photoPublicId: map['photoPublicId'] as String?,
