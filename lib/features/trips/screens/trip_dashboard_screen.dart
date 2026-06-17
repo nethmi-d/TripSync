@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+
+import '../../../core/routes/app_routes.dart';
+
 import '../models/trip_model.dart';
 import '../services/trip_service.dart';
 
@@ -87,28 +90,43 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ActionCard(
                     icon: Icons.calendar_today_outlined,
                     title: "Itinerary",
-                    iconColor: Color(0xFF2563EB),
-                    backgroundColor: Color(0xFFDBEAFE),
+                    iconColor: const Color(0xFF2563EB),
+                    backgroundColor: const Color(0xFFDBEAFE),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.itinerary,
+                      );
+                    },
                   ),
-                  ActionCard(
+
+                  const ActionCard(
                     icon: Icons.attach_money,
                     title: "Budget",
                     iconColor: Color(0xFF16A34A),
                     backgroundColor: Color(0xFFDCFCE7),
                   ),
+
                   ActionCard(
                     icon: Icons.task_alt,
                     title: "Tasks",
-                    iconColor: Color(0xFFA855F7),
-                    backgroundColor: Color(0xFFF3E8FF),
+                    iconColor: const Color(0xFFA855F7),
+                    backgroundColor: const Color(0xFFF3E8FF),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.tasks,
+                      );
+                    },
                   ),
-                  ActionCard(
+
+                  const ActionCard(
                     icon: Icons.camera_alt,
                     title: "Photos",
                     iconColor: Color(0xFFEC4899),
@@ -125,7 +143,12 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(
+                      context,
+                      AppRoutes.addExpenses,
+                    );
+                    },
                     child: const Text(
                       "+ Add",
                       style: TextStyle(
@@ -292,7 +315,12 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       color: Colors.white,
                       size: 18,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(
+                      context,
+                      AppRoutes.inviteMembers,
+                    );
+                    },
                   ),
                 ),
               ),
@@ -308,7 +336,12 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       color: Colors.white,
                       size: 18,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.tripSettings,
+                      );
+                    },
                   ),
                 ),
               ),
@@ -504,6 +537,7 @@ class ActionCard extends StatelessWidget {
   final String title;
   final Color iconColor;
   final Color backgroundColor;
+  final VoidCallback? onTap;
 
   const ActionCard({
     super.key,
@@ -511,38 +545,55 @@ class ActionCard extends StatelessWidget {
     required this.title,
     required this.iconColor,
     required this.backgroundColor,
+    this.onTap,
   });
+
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 72,
-      height: 84,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 12),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 72,
+        height: 84,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.05),
+              blurRadius: 12,
             ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 22,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
