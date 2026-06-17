@@ -90,49 +90,91 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ActionCard(
-                    icon: Icons.calendar_today_outlined,
-                    title: "Itinerary",
-                    iconColor: const Color(0xFF2563EB),
-                    backgroundColor: const Color(0xFFDBEAFE),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.itinerary,
-                      );
-                    },
-                  ),
+              SizedBox(
+                height: 95,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
 
-                  const ActionCard(
-                    icon: Icons.attach_money,
-                    title: "Budget",
-                    iconColor: Color(0xFF16A34A),
-                    backgroundColor: Color(0xFFDCFCE7),
-                  ),
+                    ActionCard(
+                      icon: Icons.calendar_today_outlined,
+                      title: "Itinerary",
+                      iconColor: const Color(0xFF2563EB),
+                      backgroundColor: const Color(0xFFDBEAFE),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.itinerary,
+                        );
+                      },
+                    ),
 
-                  ActionCard(
-                    icon: Icons.task_alt,
-                    title: "Tasks",
-                    iconColor: const Color(0xFFA855F7),
-                    backgroundColor: const Color(0xFFF3E8FF),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.tasks,
-                      );
-                    },
-                  ),
+                    const SizedBox(width: 8),
 
-                  const ActionCard(
-                    icon: Icons.camera_alt,
-                    title: "Photos",
-                    iconColor: Color(0xFFEC4899),
-                    backgroundColor: Color(0xFFFCE7F3),
-                  ),
-                ],
+                    ActionCard(
+                      icon: Icons.attach_money,
+                      title: "Budget",
+                      iconColor: const Color(0xFF16A34A),
+                      backgroundColor: const Color(0xFFDCFCE7),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    ActionCard(
+                      icon: Icons.task_alt,
+                      title: "Tasks",
+                      iconColor: const Color(0xFFA855F7),
+                      backgroundColor: const Color(0xFFF3E8FF),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.tasks,
+                        );
+                      },
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    ActionCard(
+                      icon: Icons.photo_camera,
+                      title: "Photos",
+                      iconColor: const Color(0xFFEC4899),
+                      backgroundColor: const Color(0xFFFCE7F3),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    ActionCard(
+                      icon: Icons.location_on,
+                      title: "Places",
+                      iconColor: const Color(0xFFF97316),
+                      backgroundColor: const Color(0xFFFFEDD5),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.savedPlaces,
+                        );
+                      },
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    ActionCard(
+                      icon: Icons.home_rounded,
+                      title: "Accommodation",
+                      iconColor: const Color(0xFF111827),
+                      backgroundColor: const Color(0xFFE5E7EB),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.accommodation,
+                        );
+                      },
+                    ),
+
+                    const SizedBox(width: 12),
+                  ],
+                ),
               ),
               const SizedBox(height: 28),
               Row(
