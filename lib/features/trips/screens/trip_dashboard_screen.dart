@@ -154,6 +154,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                         Navigator.pushNamed(
                           context,
                           AppRoutes.itinerary,
+                          arguments: widget.tripId,
                         );
                       },
                     ),
@@ -340,6 +341,11 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
     final coverImageUrl =
         trip?.coverImageUrl ??
         "https://images.unsplash.com/photo-1537996194471-e657df975ab4";
+    final currentUserId = _authService.currentFirebaseUser?.uid;
+    final isAdmin =
+        trip != null &&
+        currentUserId != null &&
+        trip.adminIds.contains(currentUserId);
 
     return Container(
       decoration: BoxDecoration(
@@ -409,46 +415,48 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                   ),
                 ),
               ),
-              Positioned(
-                top: 12,
-                right: 60,
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.white24,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.group_add_outlined,
-                      color: Colors.white,
-                      size: 18,
+              if (isAdmin) ...[
+                Positioned(
+                  top: 12,
+                  right: 60,
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white24,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.group_add_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.inviteMembers,
+                          arguments: trip.id,
+                        );
+                      },
                     ),
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.inviteMembers,
-                        arguments: trip?.id,
-                      );
-                    },
                   ),
                 ),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.white24,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      color: Colors.white,
-                      size: 18,
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white24,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.settings_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        _openTripSettings(trip);
+                      },
                     ),
-                    onPressed: () {
-                      _openTripSettings(trip);
-                    },
                   ),
                 ),
-              ),
+              ],
               Positioned(
                 left: 18,
                 right: 18,

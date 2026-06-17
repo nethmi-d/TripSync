@@ -58,7 +58,9 @@ class RouteGenerator {
         );
 
       case AppRoutes.itinerary:
-        return _buildRoute(const ItineraryScreen());
+        return _buildRoute(
+          ItineraryScreen(tripId: settings.arguments as String?),
+        );
 
       case AppRoutes.tasks:
         return _buildRoute(const TasksScreen());

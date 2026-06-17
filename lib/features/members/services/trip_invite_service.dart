@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -152,6 +154,68 @@ class TripInviteService {
                 ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return invites;
         });
+  }
+
+  Stream<List<TripInvite>> watchCurrentUserNotificationInvites() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      return Stream.value(const []);
+    }
+
+    late StreamController<List<TripInvite>> controller;
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? targetSub;
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? senderSub;
+    List<TripInvite> targetInvites = const [];
+    List<TripInvite> sentInvites = const [];
+
+    void emitInvites() {
+      final invitesById = <String, TripInvite>{};
+      for (final invite in [...targetInvites, ...sentInvites]) {
+        invitesById[invite.id] = invite;
+      }
+      final invites = invitesById.values.toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      if (!controller.isClosed) {
+        controller.add(invites);
+      }
+    }
+
+    controller = StreamController<List<TripInvite>>(
+      onListen: () {
+        targetSub = _invites
+            .where('targetUid', isEqualTo: currentUser.uid)
+            .snapshots()
+            .listen(
+              (snapshot) {
+                targetInvites = snapshot.docs
+                    .map((doc) => TripInvite.fromMap(doc.data()))
+                    .toList();
+                emitInvites();
+              },
+              onError: controller.addError,
+            );
+
+        senderSub = _invites
+            .where('senderUid', isEqualTo: currentUser.uid)
+            .snapshots()
+            .listen(
+              (snapshot) {
+                sentInvites = snapshot.docs
+                    .map((doc) => TripInvite.fromMap(doc.data()))
+                    .toList();
+                emitInvites();
+              },
+              onError: controller.addError,
+            );
+      },
+      onCancel: () async {
+        await targetSub?.cancel();
+        await senderSub?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 
   Future<void> cancelInvite(String inviteId) async {
