@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-
 import '../../../core/routes/app_routes.dart';
-
+import '../../auth/models/user_model.dart';
+import '../../auth/services/auth_service.dart';
 import '../models/trip_model.dart';
 import '../services/trip_service.dart';
 
@@ -17,7 +17,9 @@ class TripDashboardScreen extends StatefulWidget {
 
 class _TripDashboardScreenState extends State<TripDashboardScreen> {
   final TripService _tripService = TripService();
-  late final Future<TripModel?> _tripFuture;
+  final AuthService _authService = AuthService();
+  late Future<TripModel?> _tripFuture;
+  Future<AppUser?> _profileFuture = Future.value(null);
 
   @override
   void initState() {
@@ -26,6 +28,53 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
     _tripFuture = tripId == null
         ? Future.value(null)
         : _tripService.getTrip(tripId);
+    _profileFuture = _authService.getCurrentUserProfile();
+  }
+
+  Future<void> _openTripSettings(TripModel? trip) async {
+    final tripId = trip?.id ?? widget.tripId;
+    if (tripId == null) {
+      return;
+    }
+
+    final updated = await Navigator.pushNamed(
+      context,
+      AppRoutes.tripSettings,
+      arguments: tripId,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (updated is TripModel) {
+      setState(() {
+        _tripFuture = Future.value(updated);
+      });
+      return;
+    }
+
+    setState(() {
+      _tripFuture = _tripService.getTrip(tripId);
+    });
+  }
+
+  void _onBottomNavTap(int index) {
+    switch (index) {
+      case 1:
+        Navigator.pushNamed(context, AppRoutes.notifications);
+        break;
+      case 2:
+        Navigator.pushNamed(context, AppRoutes.profile).then((_) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _profileFuture = _authService.getCurrentUserProfile();
+          });
+        });
+        break;
+    }
   }
 
   @override
@@ -186,10 +235,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      Navigator.pushNamed(
-                      context,
-                      AppRoutes.addExpenses,
-                    );
+                      Navigator.pushNamed(context, AppRoutes.addExpenses);
                     },
                     child: const Text(
                       "+ Add",
@@ -248,16 +294,34 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: "Alerts",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
+      bottomNavigationBar: FutureBuilder<AppUser?>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+
+          return BottomNavigationBar(
+            currentIndex: 0,
+            onTap: _onBottomNavTap,
+            items: [
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: "Home",
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.notifications),
+                label: "Alerts",
+              ),
+              BottomNavigationBarItem(
+                icon: _NavProfileAvatar(user: user),
+                activeIcon: _NavProfileAvatar(
+                  user: user,
+                  isActive: true,
+                ),
+                label: "Profile",
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -359,9 +423,10 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                     ),
                     onPressed: () {
                       Navigator.pushNamed(
-                      context,
-                      AppRoutes.inviteMembers,
-                    );
+                        context,
+                        AppRoutes.inviteMembers,
+                        arguments: trip?.id,
+                      );
                     },
                   ),
                 ),
@@ -379,10 +444,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       size: 18,
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.tripSettings,
-                      );
+                      _openTripSettings(trip);
                     },
                   ),
                 ),
@@ -527,6 +589,60 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
   }
 }
 
+class _NavProfileAvatar extends StatelessWidget {
+  final AppUser? user;
+  final bool isActive;
+
+  const _NavProfileAvatar({required this.user, this.isActive = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final photoUrl = user?.photoUrl;
+    final displayName = user?.displayName ?? user?.fullName ?? '';
+
+    return CircleAvatar(
+      radius: 12,
+      backgroundColor: isActive
+          ? const Color(0xFFDBEAFE)
+          : const Color(0xFFE5E7EB),
+      backgroundImage: photoUrl == null || photoUrl.isEmpty
+          ? null
+          : NetworkImage(photoUrl),
+      child: photoUrl == null || photoUrl.isEmpty
+          ? Text(
+              _profileInitials(displayName),
+              style: TextStyle(
+                color: isActive
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF6B7280),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+String _profileInitials(String name) {
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
+
+  if (parts.isEmpty) {
+    return '?';
+  }
+
+  if (parts.length == 1) {
+    return parts.first.substring(0, 1).toUpperCase();
+  }
+
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
+}
+
 class _SummaryTile extends StatelessWidget {
   final String title;
   final String value;
@@ -590,7 +706,6 @@ class ActionCard extends StatelessWidget {
     this.onTap,
   });
 
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -602,10 +717,7 @@ class ActionCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(.05),
-              blurRadius: 12,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 12),
           ],
         ),
         child: Column(
@@ -618,21 +730,14 @@ class ActionCard extends StatelessWidget {
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 22,
-              ),
+              child: Icon(icon, color: iconColor, size: 22),
             ),
 
             const SizedBox(height: 10),
 
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
             ),
           ],
         ),

@@ -37,6 +37,37 @@ class UserService {
     return data == null ? null : AppUser.fromMap(data);
   }
 
+  Future<AppUser?> getUserByEmail(String email) async {
+    final fallbackSnapshot = await _users
+        .where('email', isEqualTo: email.trim())
+        .limit(1)
+        .get();
+    if (fallbackSnapshot.docs.isNotEmpty) {
+      return AppUser.fromMap(fallbackSnapshot.docs.first.data());
+    }
+
+    return null;
+  }
+
+  Future<List<AppUser>> searchUsersByEmailPrefix(
+    String query, {
+    int limit = 8,
+  }) async {
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      return const [];
+    }
+
+    final snapshot = await _users
+        .orderBy('email')
+        .startAt([normalizedQuery])
+        .endAt(['$normalizedQuery\uf8ff'])
+        .limit(limit)
+        .get();
+
+    return snapshot.docs.map((doc) => AppUser.fromMap(doc.data())).toList();
+  }
+
   Future<void> updateUser(String uid, Map<String, dynamic> changes) async {
     try {
       AppLogger.info('UserService', 'Updating Firestore profile for $uid.');

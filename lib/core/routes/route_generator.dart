@@ -48,10 +48,14 @@ class RouteGenerator {
         );
 
       case AppRoutes.tripSettings:
-        return _buildRoute(const TripSettingsScreen());
+        return _buildRoute(
+          TripSettingsScreen(tripId: settings.arguments as String?),
+        );
 
       case AppRoutes.inviteMembers:
-        return _buildRoute(const InviteMembersScreen());
+        return _buildRoute(
+          InviteMembersScreen(tripId: settings.arguments as String?),
+        );
 
       case AppRoutes.itinerary:
         return _buildRoute(const ItineraryScreen());

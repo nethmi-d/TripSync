@@ -238,6 +238,7 @@ class AuthService {
         fullName: fullName.trim(),
         displayName: displayName.trim(),
         email: email.trim().toLowerCase(),
+        emailLowercase: email.trim().toLowerCase(),
         phoneNumber: _nullableTrimmed(phoneNumber),
         photoUrl: photoUrl,
         photoPublicId: photoPublicId,
