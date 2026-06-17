@@ -143,7 +143,12 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(
+                      context,
+                      AppRoutes.addExpenses,
+                    );
+                    },
                     child: const Text(
                       "+ Add",
                       style: TextStyle(

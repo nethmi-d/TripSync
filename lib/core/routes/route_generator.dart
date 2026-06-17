@@ -12,6 +12,7 @@ import '../../features/trips/screens/trip_settings.dart';
 import '../../features/members/screens/invite_members.dart';
 import '../../features/itinerary/screens/itinerary_screen.dart';
 import '../../features/tasks/screens/tasks_screen.dart';
+import '../../features/budget/screens/add_expenses_screen.dart';
 
 import 'app_routes.dart';
 
@@ -55,6 +56,9 @@ class RouteGenerator {
 
       case AppRoutes.tasks:
         return _buildRoute(const TasksScreen());
+
+      case AppRoutes.addExpenses:
+        return _buildRoute(const AddExpensesScreen());
 
       default:
         return _buildRoute(
