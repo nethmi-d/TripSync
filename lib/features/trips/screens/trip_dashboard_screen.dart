@@ -176,6 +176,13 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       title: "Photos",
                       iconColor: const Color(0xFFEC4899),
                       backgroundColor: const Color(0xFFFCE7F3),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.imageGallery,
+                          arguments: widget.tripId,
+                        );
+                      },
                     ),
 
                     const SizedBox(width: 8),

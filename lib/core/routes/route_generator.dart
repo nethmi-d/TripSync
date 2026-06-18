@@ -16,6 +16,7 @@ import '../../features/budget/screens/add_expenses_screen.dart';
 import '../../features/budget/screens/budget_expenses_screen.dart';
 import '../../features/places/screens/saved_places_screen.dart';
 import '../../features/accommodation/screens/accommodation_screen.dart';
+import '../../features/gallery/screens/image_gallery_screen.dart';
 
 import 'app_routes.dart';
 
@@ -81,6 +82,11 @@ class RouteGenerator {
 
       case AppRoutes.accommodation:
         return _buildRoute(const AccommodationScreen());
+
+      case AppRoutes.imageGallery:
+        return _buildRoute(
+          ImageGalleryScreen(tripId: settings.arguments as String?),
+        );
 
       default:
         return _buildRoute(

@@ -3,12 +3,6 @@
 Cloudflare Worker that securely manages Cloudinary assets. Firebase ID tokens
 identify the caller, while Cloudinary credentials remain in Worker secrets.
 
-## Profile-photo behavior
-
-- Uploads overwrite `tripsync/users/{uid}/profile/avatar`.
-- Edits do not create abandoned profile-photo assets.
-- Account deletion calls the Worker before deleting Firestore/Auth data.
-
 ## Local setup
 
 1. Copy `.dev.vars.example` to `.dev.vars`.
