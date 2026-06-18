@@ -111,10 +111,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<TripInvite>>(
-      stream: _inviteService.watchCurrentUserInvites(),
+      stream: _inviteService.watchCurrentUserNotificationInvites(),
       builder: (context, snapshot) {
+        final currentUserId = _authService.currentFirebaseUser?.uid;
         final invites = snapshot.data ?? const <TripInvite>[];
-        final cards = invites.map(_NotificationCardData.fromInvite).toList()
+        final cards = invites
+            .map(
+              (invite) => _NotificationCardData.fromInvite(
+                invite,
+                currentUserId: currentUserId,
+              ),
+            )
+            .toList()
           ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
         final newCount = cards.where((card) => card.isNew).length;
 
@@ -201,18 +209,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   itemBuilder: (context, index) {
                     final card = cards[index];
                     final invite = card.invite;
+                    final canRespond = invite != null &&
+                        currentUserId != null &&
+                        invite.targetUid == currentUserId &&
+                        invite.status == TripInviteStatus.pending;
 
                     return _NotificationCard(
                       card: card,
                       isBusy: invite == null
                           ? false
                           : _busyInviteIds.contains(invite.id),
-                      onApprove: invite != null &&
-                              invite.status == TripInviteStatus.pending
+                      onApprove: canRespond
                           ? () => _respondToInvite(invite, true)
                           : null,
-                      onReject: invite != null &&
-                              invite.status == TripInviteStatus.pending
+                      onReject: canRespond
                           ? () => _respondToInvite(invite, false)
                           : null,
                     );
@@ -409,8 +419,13 @@ class _NotificationCardData {
     required this.invite,
   });
 
-  factory _NotificationCardData.fromInvite(TripInvite invite) {
+  factory _NotificationCardData.fromInvite(
+    TripInvite invite, {
+    required String? currentUserId,
+  }) {
     final isPending = invite.status == TripInviteStatus.pending;
+    final isSender = currentUserId != null && invite.senderUid == currentUserId;
+    final targetName = _nameFromEmail(invite.targetEmail);
 
     final statusText = switch (invite.status) {
       TripInviteStatus.pending => 'Pending',
@@ -433,10 +448,31 @@ class _NotificationCardData {
       TripInviteStatus.cancelled => const Color(0xFF374151),
     };
 
+    final title = isSender
+        ? switch (invite.status) {
+            TripInviteStatus.accepted => 'Join Request Approved',
+            TripInviteStatus.rejected => 'Join Request Rejected',
+            TripInviteStatus.cancelled => 'Join Request Cancelled',
+            TripInviteStatus.pending => 'Join Request Sent',
+          }
+        : 'New Join Request';
+
+    final message = isSender
+        ? switch (invite.status) {
+            TripInviteStatus.accepted =>
+              '$targetName approved the join request for "${invite.tripName}"',
+            TripInviteStatus.rejected =>
+              '$targetName rejected the join request for "${invite.tripName}"',
+            TripInviteStatus.cancelled =>
+              'The join request for $targetName was cancelled.',
+            TripInviteStatus.pending =>
+              'Join request sent to $targetName for "${invite.tripName}"',
+          }
+        : '${invite.senderName} wants you to join "${invite.tripName}"';
+
     return _NotificationCardData(
-      title: 'New Join Request',
-      message:
-          '${invite.senderName} wants you to join "${invite.tripName}"',
+      title: title,
+      message: message,
       timeLabel: _timeAgo(invite.createdAt),
       icon: Icons.person_add_alt_1,
       color: const Color(0xFF3B82F6),
@@ -448,6 +484,11 @@ class _NotificationCardData {
       createdAt: invite.createdAt,
       invite: invite,
     );
+  }
+
+  static String _nameFromEmail(String email) {
+    final name = email.split('@').first.trim();
+    return name.isEmpty ? 'Member' : name;
   }
 
   static String _timeAgo(DateTime createdAt) {

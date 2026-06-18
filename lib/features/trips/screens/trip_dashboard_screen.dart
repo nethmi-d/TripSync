@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/services/auth_service.dart';
+import '../../budget/models/budget_models.dart';
+import '../../budget/services/budget_service.dart';
 import '../models/trip_model.dart';
 import '../services/trip_service.dart';
 
@@ -18,6 +20,7 @@ class TripDashboardScreen extends StatefulWidget {
 class _TripDashboardScreenState extends State<TripDashboardScreen> {
   final TripService _tripService = TripService();
   final AuthService _authService = AuthService();
+  final BudgetService _budgetService = BudgetService();
   late Future<TripModel?> _tripFuture;
   Future<AppUser?> _profileFuture = Future.value(null);
 
@@ -79,24 +82,6 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final expenses = [
-      {
-        "title": "Flight Tickets",
-        "subtitle": "Paid by Sarah - May 5",
-        "amount": "\$1200",
-      },
-      {
-        "title": "Hotel Deposit",
-        "subtitle": "Paid by Mike - May 3",
-        "amount": "\$800",
-      },
-      {
-        "title": "Car Rental",
-        "subtitle": "Paid by You - May 1",
-        "amount": "\$340",
-      },
-    ];
-
     final tasks = [
       {"title": "Book scuba diving tour", "subtitle": "Sarah - Due May 10"},
       {"title": "Get travel insurance", "subtitle": "You - Due May 12"},
@@ -144,7 +129,6 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-
                     ActionCard(
                       icon: Icons.calendar_today_outlined,
                       title: "Itinerary",
@@ -154,6 +138,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                         Navigator.pushNamed(
                           context,
                           AppRoutes.itinerary,
+                          arguments: widget.tripId,
                         );
                       },
                     ),
@@ -165,6 +150,13 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       title: "Budget",
                       iconColor: const Color(0xFF16A34A),
                       backgroundColor: const Color(0xFFDCFCE7),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.budgetExpenses,
+                          arguments: widget.tripId,
+                        );
+                      },
                     ),
 
                     const SizedBox(width: 8),
@@ -175,10 +167,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       iconColor: const Color(0xFFA855F7),
                       backgroundColor: const Color(0xFFF3E8FF),
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.tasks,
-                        );
+                        Navigator.pushNamed(context, AppRoutes.tasks);
                       },
                     ),
 
@@ -199,10 +188,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       iconColor: const Color(0xFFF97316),
                       backgroundColor: const Color(0xFFFFEDD5),
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.savedPlaces,
-                        );
+                        Navigator.pushNamed(context, AppRoutes.savedPlaces);
                       },
                     ),
 
@@ -214,10 +200,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       iconColor: const Color(0xFF111827),
                       backgroundColor: const Color(0xFFE5E7EB),
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.accommodation,
-                        );
+                        Navigator.pushNamed(context, AppRoutes.accommodation);
                       },
                     ),
 
@@ -226,43 +209,28 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Recent Expenses",
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.addExpenses);
-                    },
-                    child: const Text(
-                      "+ Add",
-                      style: TextStyle(
-                        color: Color(0xFF2563EB),
-                        fontWeight: FontWeight.w600,
-                      ),
+              FutureBuilder<TripModel?>(
+                future: _tripFuture,
+                builder: (context, tripSnapshot) {
+                  final trip = tripSnapshot.data;
+                  if (trip == null) return const SizedBox.shrink();
+                  final uid = _authService.currentFirebaseUser?.uid;
+                  return _DashboardExpenses(
+                    trip: trip,
+                    currentUid: uid,
+                    service: _budgetService,
+                    onOpenBudget: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.budgetExpenses,
+                      arguments: trip.id,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Column(
-                  children: expenses
-                      .map(
-                        (expense) => ListTile(
-                          title: Text(expense["title"]!),
-                          subtitle: Text(expense["subtitle"]!),
-                          trailing: Text(
-                            expense["amount"]!,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
+                    onAddExpense: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.addExpenses,
+                      arguments: trip.id,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
               const Row(
@@ -313,10 +281,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
               ),
               BottomNavigationBarItem(
                 icon: _NavProfileAvatar(user: user),
-                activeIcon: _NavProfileAvatar(
-                  user: user,
-                  isActive: true,
-                ),
+                activeIcon: _NavProfileAvatar(user: user, isActive: true),
                 label: "Profile",
               ),
             ],
@@ -340,6 +305,11 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
     final coverImageUrl =
         trip?.coverImageUrl ??
         "https://images.unsplash.com/photo-1537996194471-e657df975ab4";
+    final currentUserId = _authService.currentFirebaseUser?.uid;
+    final isAdmin =
+        trip != null &&
+        currentUserId != null &&
+        trip.adminIds.contains(currentUserId);
 
     return Container(
       decoration: BoxDecoration(
@@ -347,7 +317,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.08),
+            color: Colors.black.withValues(alpha: .08),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -389,7 +359,10 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(.65)],
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: .65),
+                    ],
                   ),
                 ),
               ),
@@ -409,46 +382,48 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                   ),
                 ),
               ),
-              Positioned(
-                top: 12,
-                right: 60,
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.white24,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.group_add_outlined,
-                      color: Colors.white,
-                      size: 18,
+              if (isAdmin) ...[
+                Positioned(
+                  top: 12,
+                  right: 60,
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white24,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.group_add_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.inviteMembers,
+                          arguments: trip.id,
+                        );
+                      },
                     ),
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.inviteMembers,
-                        arguments: trip?.id,
-                      );
-                    },
                   ),
                 ),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.white24,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      color: Colors.white,
-                      size: 18,
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white24,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.settings_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        _openTripSettings(trip);
+                      },
                     ),
-                    onPressed: () {
-                      _openTripSettings(trip);
-                    },
                   ),
                 ),
-              ),
+              ],
               Positioned(
                 left: 18,
                 right: 18,
@@ -515,18 +490,17 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _SummaryTile(
-                        title: "Budget Used",
-                        value: "\$0",
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: const LinearProgressIndicator(
-                            value: 0,
-                            minHeight: 6,
-                          ),
-                        ),
-                      ),
+                      child: trip == null
+                          ? const _SummaryTile(
+                              title: 'Budget Used',
+                              value: 'Not set',
+                              subtitle: 'Trip unavailable',
+                              backgroundColor: Color(0xFFF1F5F9),
+                            )
+                          : _LiveBudgetUsed(
+                              tripId: trip.id,
+                              service: _budgetService,
+                            ),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
@@ -643,19 +617,390 @@ String _profileInitials(String name) {
       .toUpperCase();
 }
 
+class _DashboardExpenses extends StatelessWidget {
+  final TripModel trip;
+  final String? currentUid;
+  final BudgetService service;
+  final VoidCallback onOpenBudget;
+  final VoidCallback onAddExpense;
+
+  const _DashboardExpenses({
+    required this.trip,
+    required this.currentUid,
+    required this.service,
+    required this.onOpenBudget,
+    required this.onAddExpense,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isAdmin = currentUid != null && trip.adminIds.contains(currentUid);
+    return StreamBuilder<TripBudget?>(
+      stream: service.watchBudget(trip.id),
+      builder: (context, budgetSnapshot) {
+        final budget = budgetSnapshot.data;
+        return StreamBuilder<List<TripExpense>>(
+          stream: service.watchExpenses(trip.id),
+          builder: (context, expenseSnapshot) {
+            final expenses = expenseSnapshot.data ?? const <TripExpense>[];
+            final pendingPrivateExpenses = currentUid == null
+                ? const <TripExpense>[]
+                : expenses.where((expense) {
+                    return !expense.isGroupExpense &&
+                        expense.paidByUid != currentUid &&
+                        (expense.shares[currentUid] ?? 0) > 0 &&
+                        !expense.settledParticipantIds.contains(currentUid);
+                  }).toList();
+            return StreamBuilder<GroupSettlement?>(
+              stream: service.watchMySettlement(trip.id),
+              builder: (context, settlementSnapshot) {
+                final settlement = settlementSnapshot.data;
+                final showContribution =
+                    settlement != null &&
+                    !settlement.memberPaid &&
+                    !settlement.adminConfirmed;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Recent Expenses',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (isAdmin)
+                          IconButton(
+                            tooltip: 'Add expense',
+                            onPressed: onAddExpense,
+                            icon: const Icon(
+                              Icons.add_circle_outline,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ),
+                        TextButton(
+                          onPressed: onOpenBudget,
+                          child: const Text('View all'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    if (showContribution)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          border: Border.all(color: const Color(0xFFFED7AA)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.account_balance_wallet_outlined,
+                              color: Color(0xFFEA580C),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Your group contribution',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${budget?.currency ?? 'LKR'} ${settlement.amount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFFEA580C),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            FilledButton(
+                              onPressed: () => _markPaid(context),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFEA580C),
+                              ),
+                              child: const Text('Paid'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ...pendingPrivateExpenses.map((expense) {
+                      final share = expense.shares[currentUid] ?? 0;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.receipt_long_outlined,
+                              color: Color(0xFFD97706),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    expense.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${budget?.currency ?? 'LKR'} ${share.toStringAsFixed(2)} to settle',
+                                    style: const TextStyle(
+                                      color: Color(0xFFD97706),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            OutlinedButton(
+                              onPressed: () => _settlePrivate(context, expense),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFFD97706),
+                                side: const BorderSide(
+                                  color: Color(0xFFF59E0B),
+                                ),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: const Text('Settle'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    Card(
+                      margin: EdgeInsets.zero,
+                      child: expenses.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(18),
+                              child: Center(
+                                child: Text(
+                                  'No expenses recorded yet.',
+                                  style: TextStyle(color: Color(0xFF6B7280)),
+                                ),
+                              ),
+                            )
+                          : Column(
+                              children: expenses.take(3).map((expense) {
+                                return ListTile(
+                                  title: Text(expense.title),
+                                  subtitle: Text(
+                                    expense.isGroupExpense
+                                        ? 'Group expense'
+                                        : 'Private shared expense',
+                                  ),
+                                  trailing: Text(
+                                    '${budget?.currency ?? 'LKR'} ${expense.amount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _markPaid(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm payment'),
+        content: const Text(
+          'Confirm that you paid your group contribution? An admin must verify it.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('I have paid'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await service.markMyContributionPaid(trip.id);
+    } on BudgetServiceException catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
+  Future<void> _settlePrivate(BuildContext context, TripExpense expense) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Settle private expense?'),
+        content: Text(
+          'Confirm that you settled your share of "${expense.title}".',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Settle'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await service.settleMyPrivateShare(
+        tripId: trip.id,
+        expenseId: expense.id,
+      );
+    } on BudgetServiceException catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+}
+
+class _LiveBudgetUsed extends StatelessWidget {
+  final String tripId;
+  final BudgetService service;
+
+  const _LiveBudgetUsed({required this.tripId, required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<TripBudget?>(
+      stream: service.watchBudget(tripId),
+      builder: (context, budgetSnapshot) {
+        final budget = budgetSnapshot.data;
+        return StreamBuilder<List<TripExpense>>(
+          stream: service.watchExpenses(tripId),
+          builder: (context, expenseSnapshot) {
+            final spent = (expenseSnapshot.data ?? const <TripExpense>[])
+                .where((expense) => expense.isGroupExpense)
+                .fold<double>(0, (total, expense) => total + expense.amount);
+            final total = budget?.totalAmount ?? 0;
+            final ratio = total <= 0 ? 0.0 : spent / total;
+            final amount = total <= 0
+                ? 'Not set'
+                : '${budget!.currency} ${spent.toStringAsFixed(2)}';
+            final caption = total <= 0
+                ? 'Set up the trip budget'
+                : 'of ${budget!.currency} ${total.toStringAsFixed(2)}';
+            return SizedBox(
+              height: 135,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Budget Used',
+                      style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 29,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          amount,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            color: Color(0xFF111827),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: LinearProgressIndicator(
+                        value: ratio.clamp(0.0, 1.0).toDouble(),
+                        minHeight: 6,
+                        color: ratio >= .8
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF2563EB),
+                        backgroundColor: const Color(0xFFDBEAFE),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 class _SummaryTile extends StatelessWidget {
   final String title;
   final String value;
   final String? subtitle;
   final Color backgroundColor;
-  final Widget? child;
 
   const _SummaryTile({
     required this.title,
     required this.value,
     this.subtitle,
     required this.backgroundColor,
-    this.child,
   });
 
   @override
@@ -678,11 +1023,10 @@ class _SummaryTile extends StatelessWidget {
               style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
-            child ??
-                Text(
-                  subtitle ?? "",
-                  style: const TextStyle(color: Color(0xFF6B7280)),
-                ),
+            Text(
+              subtitle ?? "",
+              style: const TextStyle(color: Color(0xFF6B7280)),
+            ),
           ],
         ),
       ),
@@ -717,7 +1061,10 @@ class ActionCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 12),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: .05),
+              blurRadius: 12,
+            ),
           ],
         ),
         child: Column(
