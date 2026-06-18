@@ -13,6 +13,7 @@ import '../../features/members/screens/invite_members.dart';
 import '../../features/itinerary/screens/itinerary_screen.dart';
 import '../../features/tasks/screens/tasks_screen.dart';
 import '../../features/budget/screens/add_expenses_screen.dart';
+import '../../features/budget/screens/budget_expenses_screen.dart';
 import '../../features/places/screens/saved_places_screen.dart';
 import '../../features/accommodation/screens/accommodation_screen.dart';
 
@@ -66,7 +67,14 @@ class RouteGenerator {
         return _buildRoute(const TasksScreen());
 
       case AppRoutes.addExpenses:
-        return _buildRoute(const AddExpensesScreen());
+        return _buildRoute(
+          AddExpensesScreen(tripId: settings.arguments as String?),
+        );
+
+      case AppRoutes.budgetExpenses:
+        return _buildRoute(
+          BudgetExpensesScreen(tripId: settings.arguments as String?),
+        );
 
       case AppRoutes.savedPlaces:
         return _buildRoute(const SavedPlacesScreen());
