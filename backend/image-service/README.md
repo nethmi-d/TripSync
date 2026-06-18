@@ -3,12 +3,6 @@
 Cloudflare Worker that securely manages Cloudinary assets. Firebase ID tokens
 identify the caller, while Cloudinary credentials remain in Worker secrets.
 
-## Profile-photo behavior
-
-- Uploads overwrite `tripsync/users/{uid}/profile/avatar`.
-- Edits do not create abandoned profile-photo assets.
-- Account deletion calls the Worker before deleting Firestore/Auth data.
-
 ## Local setup
 
 1. Copy `.dev.vars.example` to `.dev.vars`.
@@ -32,6 +26,7 @@ Authenticate Wrangler, then store secrets:
 npx wrangler secret put CLOUDINARY_CLOUD_NAME
 npx wrangler secret put CLOUDINARY_API_KEY
 npx wrangler secret put CLOUDINARY_API_SECRET
+npx wrangler secret put GOOGLE_MAPS_API_KEY
 npm run deploy
 ```
 
