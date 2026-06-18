@@ -5,6 +5,8 @@ import '../../auth/models/user_model.dart';
 import '../../auth/services/auth_service.dart';
 import '../../budget/models/budget_models.dart';
 import '../../budget/services/budget_service.dart';
+import '../../tasks/models/personal_task.dart';
+import '../../tasks/services/task_service.dart';
 import '../models/trip_model.dart';
 import '../services/trip_service.dart';
 
@@ -21,6 +23,8 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
   final TripService _tripService = TripService();
   final AuthService _authService = AuthService();
   final BudgetService _budgetService = BudgetService();
+  TaskService? _taskServiceCache;
+  TaskService get _taskService => _taskServiceCache ??= TaskService();
   late Future<TripModel?> _tripFuture;
   Future<AppUser?> _profileFuture = Future.value(null);
 
@@ -82,12 +86,6 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tasks = [
-      {"title": "Book scuba diving tour", "subtitle": "Sarah - Due May 10"},
-      {"title": "Get travel insurance", "subtitle": "You - Due May 12"},
-      {"title": "Confirm hotel check-in", "subtitle": "Mike - Due May 15"},
-    ];
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FC),
       body: SafeArea(
@@ -233,30 +231,15 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Pending Tasks",
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-                  ),
-                  Text("3 tasks", style: TextStyle(color: Color(0xFF6B7280))),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Column(
-                  children: tasks
-                      .map(
-                        (task) => CheckboxListTile(
-                          value: false,
-                          onChanged: (_) {},
-                          title: Text(task["title"]!),
-                          subtitle: Text(task["subtitle"]!),
-                        ),
-                      )
-                      .toList(),
-                ),
+              _DashboardPendingTasks(
+                service: _taskService,
+                onOpenTasks: () =>
+                    Navigator.pushNamed(context, AppRoutes.tasks),
+                onError: (message) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(message)));
+                },
               ),
             ],
           ),
@@ -503,13 +486,8 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                             ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
-                      child: _SummaryTile(
-                        title: "Pending Tasks",
-                        value: "0",
-                        subtitle: "tasks to complete",
-                        backgroundColor: Color(0xFFEAF7F7),
-                      ),
+                    Expanded(
+                      child: _LivePendingTaskCount(service: _taskService),
                     ),
                   ],
                 ),
@@ -561,6 +539,180 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
 
     return months[month - 1];
   }
+}
+
+class _DashboardPendingTasks extends StatelessWidget {
+  final TaskService service;
+  final VoidCallback onOpenTasks;
+  final ValueChanged<String> onError;
+
+  const _DashboardPendingTasks({
+    required this.service,
+    required this.onOpenTasks,
+    required this.onError,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<PersonalTask>>(
+      stream: service.watchMyTasks(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pending Tasks',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.cloud_off_outlined,
+                    color: Color(0xFFDC2626),
+                  ),
+                  title: const Text('Unable to load pending tasks'),
+                  subtitle: Text(
+                    snapshot.error is TaskServiceException
+                        ? (snapshot.error! as TaskServiceException).message
+                        : 'Open Tasks and try again.',
+                  ),
+                  trailing: IconButton(
+                    tooltip: 'Open tasks',
+                    onPressed: onOpenTasks,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        final pending = (snapshot.data ?? const <PersonalTask>[])
+            .where((task) => !task.isCompleted)
+            .toList();
+        final visibleTasks = pending.take(3).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Pending Tasks',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onOpenTasks,
+                  child: Text(
+                    '${pending.length} ${pending.length == 1 ? 'task' : 'tasks'}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: pending.isEmpty
+                  ? ListTile(
+                      leading: const Icon(
+                        Icons.task_alt_rounded,
+                        color: Color(0xFF2563EB),
+                      ),
+                      title: const Text('No pending tasks'),
+                      subtitle: const Text('Your task list is up to date.'),
+                      trailing: IconButton(
+                        tooltip: 'Open tasks',
+                        onPressed: onOpenTasks,
+                        icon: const Icon(Icons.chevron_right),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ...visibleTasks.map(
+                          (task) => CheckboxListTile(
+                            value: false,
+                            activeColor: const Color(0xFF2563EB),
+                            onChanged: (value) async {
+                              try {
+                                await service.setCompleted(task, value ?? true);
+                              } on TaskServiceException catch (error) {
+                                onError(error.message);
+                              }
+                            },
+                            title: Text(
+                              task.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Wrap(
+                              spacing: 10,
+                              children: [
+                                Text(_formatTaskDueDate(task.dueDate)),
+                                Text(
+                                  task.priority,
+                                  style: TextStyle(
+                                    color: _dashboardPriorityColor(
+                                      task.priority,
+                                    ),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (pending.length > visibleTasks.length)
+                          TextButton(
+                            onPressed: onOpenTasks,
+                            child: Text(
+                              'View ${pending.length - visibleTasks.length} more',
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+String _formatTaskDueDate(DateTime? date) {
+  if (date == null) return 'No due date';
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return 'Due ${months[date.month - 1]} ${date.day}';
+}
+
+Color _dashboardPriorityColor(String priority) {
+  return switch (priority) {
+    'high' => const Color(0xFFDC2626),
+    'low' => const Color(0xFF16A34A),
+    _ => const Color(0xFF2563EB),
+  };
 }
 
 class _NavProfileAvatar extends StatelessWidget {
@@ -984,6 +1136,28 @@ class _LiveBudgetUsed extends StatelessWidget {
               ),
             );
           },
+        );
+      },
+    );
+  }
+}
+
+class _LivePendingTaskCount extends StatelessWidget {
+  final TaskService service;
+
+  const _LivePendingTaskCount({required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<PersonalTask>>(
+      stream: service.watchMyTasks(),
+      builder: (context, snapshot) {
+        final count = snapshot.data?.where((task) => !task.isCompleted).length;
+        return _SummaryTile(
+          title: 'Pending Tasks',
+          value: snapshot.hasError ? '--' : '${count ?? 0}',
+          subtitle: count == 1 ? 'task to complete' : 'tasks to complete',
+          backgroundColor: const Color(0xFFEAF7F7),
         );
       },
     );
