@@ -26,6 +26,7 @@ Authenticate Wrangler, then store secrets:
 npx wrangler secret put CLOUDINARY_CLOUD_NAME
 npx wrangler secret put CLOUDINARY_API_KEY
 npx wrangler secret put CLOUDINARY_API_SECRET
+npx wrangler secret put GOOGLE_MAPS_API_KEY
 npm run deploy
 ```
 

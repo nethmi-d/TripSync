@@ -94,10 +94,10 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Manage your adventures",
-                style: TextStyle(color: Colors.grey),
-              ),
+              // const Text(
+              //   "Manage your adventures",
+              //   style: TextStyle(color: Colors.grey),
+              // ),
               const SizedBox(height: 14),
               FutureBuilder<TripModel?>(
                 future: _tripFuture,
@@ -124,8 +124,7 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
               const SizedBox(height: 14),
               SizedBox(
                 height: 95,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
                     ActionCard(
                       icon: Icons.calendar_today_outlined,
@@ -193,23 +192,13 @@ class _TripDashboardScreenState extends State<TripDashboardScreen> {
                       iconColor: const Color(0xFFF97316),
                       backgroundColor: const Color(0xFFFFEDD5),
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.savedPlaces);
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.savedPlaces,
+                          arguments: widget.tripId,
+                        );
                       },
                     ),
-
-                    const SizedBox(width: 8),
-
-                    ActionCard(
-                      icon: Icons.home_rounded,
-                      title: "Accommodation",
-                      iconColor: const Color(0xFF111827),
-                      backgroundColor: const Color(0xFFE5E7EB),
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.accommodation);
-                      },
-                    ),
-
-                    const SizedBox(width: 12),
                   ],
                 ),
               ),
@@ -1233,41 +1222,50 @@ class ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 72,
-        height: 84,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: .05),
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(12),
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 84,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .05),
+                blurRadius: 12,
               ),
-              child: Icon(icon, color: iconColor, size: 22),
-            ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              title,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

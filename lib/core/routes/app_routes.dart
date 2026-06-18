@@ -18,7 +18,6 @@ class AppRoutes {
   static const String contributionSettlement = '/contribution-settlement';
   static const String personalDebt = '/personal-debt';
   static const String savedPlaces = '/saved-places';
-  static const String accommodation = '/accommodation';
   static const String imageGallery = '/image-gallery';
   static const String notifications = '/notifications';
   static const String profile = '/profile';
