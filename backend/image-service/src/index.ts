@@ -30,18 +30,18 @@ export default {
       const auth = await authenticate(request, env);
 
       if (url.pathname === "/v1/profile-photo" && request.method === "POST") {
-        return uploadProfilePhoto(request, env, auth.uid);
+        return await uploadProfilePhoto(request, env, auth.uid);
       }
 
       if (url.pathname === "/v1/profile-photo" && request.method === "DELETE") {
-        return deleteProfilePhoto(env, auth.uid);
+        return await deleteProfilePhoto(env, auth.uid);
       }
 
       const tripCoverMatch = url.pathname.match(
         /^\/v1\/trips\/([^/]+)\/cover-photo$/,
       );
       if (tripCoverMatch && request.method === "POST") {
-        return uploadTripCoverPhoto(request, env, auth.uid, tripCoverMatch[1]);
+        return await uploadTripCoverPhoto(request, env, auth.uid, tripCoverMatch[1]);
       }
 
       const tripGalleryMatch = url.pathname.match(
@@ -51,13 +51,13 @@ export default {
         const tripId = tripGalleryMatch[1];
         const access = await getTripAccess(env, auth, tripId);
         if (request.method === "GET") {
-          return listTripGalleryPhotos(env, tripId, access);
+          return await listTripGalleryPhotos(env, tripId, access);
         }
         if (request.method === "POST") {
-          return uploadTripGalleryPhoto(request, env, tripId, access);
+          return await uploadTripGalleryPhoto(request, env, tripId, access);
         }
         if (request.method === "DELETE") {
-          return deleteTripGalleryPhoto(request, env, tripId, access);
+          return await deleteTripGalleryPhoto(request, env, tripId, access);
         }
       }
 
@@ -68,13 +68,13 @@ export default {
         const tripId = tripPlacesMatch[1];
         const access = await getTripAccess(env, auth, tripId);
         if (request.method === "GET") {
-          return listTripPlaces(env, tripId, access);
+          return await listTripPlaces(env, tripId, access);
         }
         if (request.method === "POST") {
-          return uploadTripPlace(request, env, tripId, access);
+          return await uploadTripPlace(request, env, tripId, access);
         }
         if (request.method === "DELETE") {
-          return deleteTripPlace(request, env, tripId, access);
+          return await deleteTripPlace(request, env, tripId, access);
         }
       }
 
@@ -84,7 +84,7 @@ export default {
       if (tripPlacePreviewMatch && request.method === "POST") {
         const tripId = tripPlacePreviewMatch[1];
         await getTripAccess(env, auth, tripId);
-        return previewGooglePlace(request, env);
+        return await previewGooglePlace(request, env);
       }
 
       const tripPlacePhotoMatch = url.pathname.match(
@@ -93,7 +93,7 @@ export default {
       if (tripPlacePhotoMatch && request.method === "GET") {
         const tripId = tripPlacePhotoMatch[1];
         await getTripAccess(env, auth, tripId);
-        return serveGooglePlacePhoto(url, env);
+        return await serveGooglePlacePhoto(url, env);
       }
 
       return json({ message: "Not found." }, 404);
@@ -599,6 +599,13 @@ async function previewGooglePlace(request: Request, env: Env): Promise<Response>
     .map((item) => item.displayName)
     .filter((value): value is string => Boolean(value))
     .join(", ");
+  console.info("[places.preview] final", {
+    id: place.id ?? null,
+    hasName: Boolean(place.displayName?.text),
+    hasAddress: Boolean(place.formattedAddress),
+    photoCount: place.photos?.length ?? 0,
+    hasMapsUri: Boolean(place.googleMapsUri),
+  });
   return json({
     google_place_id: place.id,
     name: place.displayName?.text ?? "Suggested place",
@@ -640,6 +647,11 @@ async function findGooglePlaceFromMapsUrl(
 ): Promise<GooglePlace> {
   const resolvedUrl = await resolveGoogleMapsUrl(mapsUrl);
   const parsed = new URL(resolvedUrl);
+  console.info("[places.preview] resolved-link", {
+    inputHost: new URL(mapsUrl).hostname,
+    resolvedHost: parsed.hostname,
+    resolvedPath: parsed.pathname,
+  });
   const placeId = parsed.searchParams.get("query_place_id");
   if (placeId) return getGooglePlaceDetails(env, placeId);
 
@@ -683,6 +695,13 @@ async function findGooglePlaceFromMapsUrl(
     },
   );
   const body = (await response.json()) as GoogleTextSearchResponse;
+  console.info("[places.preview] text-search", {
+    status: response.status,
+    query: textQuery.trim(),
+    resultCount: body.places?.length ?? 0,
+    firstResultKeys: body.places?.[0] ? Object.keys(body.places[0]) : [],
+    error: body.error?.message ?? null,
+  });
   if (!response.ok) {
     throw new ServiceError(
       response.status === 403 ? 403 : 502,
@@ -691,7 +710,26 @@ async function findGooglePlaceFromMapsUrl(
   }
   const place = body.places?.[0];
   if (!place) throw new ServiceError(404, "No Google place was found.");
-  return place;
+
+  const resolvedPlaceId = place.id ?? place.name?.split("/").pop();
+  if (resolvedPlaceId && (!place.displayName?.text || !place.formattedAddress || !place.photos?.length)) {
+    const details = await getGooglePlaceDetails(env, resolvedPlaceId);
+    const combined = { ...place, ...details, id: details.id ?? resolvedPlaceId };
+    if (!combined.displayName?.text) {
+      throw new ServiceError(
+        502,
+        "Google Places returned incomplete details for this location.",
+      );
+    }
+    return combined;
+  }
+  if (!resolvedPlaceId || !place.displayName?.text) {
+    throw new ServiceError(
+      502,
+      "Google Places returned incomplete details for this location.",
+    );
+  }
+  return { ...place, id: resolvedPlaceId };
 }
 
 async function getGooglePlaceDetails(env: Env, placeId: string): Promise<GooglePlace> {
@@ -710,6 +748,13 @@ async function getGooglePlaceDetails(env: Env, placeId: string): Promise<GoogleP
   const body = (await response.json()) as GooglePlace & {
     error?: { message?: string };
   };
+  console.info("[places.preview] place-details", {
+    status: response.status,
+    placeId,
+    responseKeys: Object.keys(body),
+    photoCount: body.photos?.length ?? 0,
+    error: body.error?.message ?? null,
+  });
   if (!response.ok) {
     throw new ServiceError(
       response.status === 403 ? 403 : 502,
@@ -724,15 +769,47 @@ async function resolveGoogleMapsUrl(value: string): Promise<string> {
   if (parsed.hostname !== "maps.app.goo.gl" && parsed.hostname !== "goo.gl") {
     return value;
   }
-  const response = await fetch(value, {
-    redirect: "follow",
-    headers: { "User-Agent": "Mozilla/5.0 TripSync/1.0" },
-  });
-  return response.url || value;
+
+  let currentUrl = value;
+  for (let redirectCount = 0; redirectCount < 5; redirectCount += 1) {
+    const response = await fetch(currentUrl, {
+      redirect: "manual",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 " +
+          "Chrome/124.0 Mobile Safari/537.36",
+      },
+    });
+    const location = response.headers.get("Location");
+    console.info("[places.preview] redirect", {
+      redirectCount,
+      status: response.status,
+      currentHost: new URL(currentUrl).hostname,
+      locationHost: location
+        ? new URL(location, currentUrl).hostname
+        : null,
+      locationPath: location
+        ? new URL(location, currentUrl).pathname
+        : null,
+    });
+    if (!location) return currentUrl;
+
+    const nextUrl = new URL(location, currentUrl);
+    if (
+      /(^|\.)google\.[a-z.]+$/.test(nextUrl.hostname.toLowerCase()) &&
+      (nextUrl.pathname === "/maps" ||
+        nextUrl.pathname.startsWith("/maps/"))
+    ) {
+      return nextUrl.toString();
+    }
+    currentUrl = nextUrl.toString();
+  }
+  throw new ServiceError(502, "Google Maps could not resolve this short link.");
 }
 
 function googlePlaceFieldMask(prefix = ""): string {
   return [
+    "name",
     "id",
     "displayName",
     "formattedAddress",
@@ -942,6 +1019,7 @@ interface FirestoreValue {
 }
 
 interface GooglePlace {
+  name?: string;
   id?: string;
   displayName?: { text?: string };
   formattedAddress?: string;
