@@ -656,13 +656,18 @@ class _PlaceCard extends StatelessWidget {
                       label: const Text('Maps'),
                     ),
                     if (canManage) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           color: const Color(0xFFDBEAFE),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: IconButton(
+                          constraints: const BoxConstraints.tightFor(
+                            width: 40,
+                            height: 40,
+                          ),
+                          padding: EdgeInsets.zero,
                           tooltip: 'Edit place',
                           onPressed: onEdit,
                           icon: const Icon(
@@ -671,13 +676,18 @@ class _PlaceCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEE2E2),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: IconButton(
+                          constraints: const BoxConstraints.tightFor(
+                            width: 40,
+                            height: 40,
+                          ),
+                          padding: EdgeInsets.zero,
                           tooltip: 'Delete place',
                           onPressed: onDelete,
                           icon: const Icon(

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -57,15 +58,29 @@ class TripPlacesService {
     if (!isGoogleMapsUrl(mapsUrl)) {
       throw const TripPlacesException('Enter a valid Google Maps link.');
     }
-    final response = await _client.post(
-      _previewUri(tripId),
-      headers: {
-        ...await _authorizationHeaders(),
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'maps_url': mapsUrl.trim()}),
-    );
+    late final http.Response response;
+    try {
+      response = await _client.post(
+        _previewUri(tripId),
+        headers: {
+          ...await _authorizationHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'maps_url': mapsUrl.trim()}),
+      );
+    } on http.ClientException {
+      throw const TripPlacesException(
+        'Unable to contact the place service. Check the Worker deployment.',
+      );
+    }
     final data = _decode(response.body);
+    debugPrint(
+      '[TripPlaces] preview status=${response.statusCode} '
+      'keys=${data.keys.join(',')} '
+      'name=${data['name']} '
+      'hasPhoto=${(data['google_photo_name'] as String? ?? '').isNotEmpty} '
+      'message=${data['message']}',
+    );
     _throwForResponse(response, data, 'Unable to read this Google Maps link.');
     return GooglePlacePreview.fromMap(data);
   }
